@@ -1155,7 +1155,7 @@ function renderRanking(tab) {
     list.innerHTML = sorted.map((r, i) => {
       const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
       const isCurrent = highlightRankId >= 0 && rankings.indexOf(r) === highlightRankId;
-      return `<div class="rank-item${isCurrent ? ' current' : ''}"><span class="rank-num ${cls}">${i+1}</span><span class="rank-name">${r.name}${isCurrent ? '<span class="rank-current-tag">你的成绩</span>' : ''}</span><span class="rank-score">${r.totalScore}</span><span class="rank-tier">${TIERS[r.highestTier]?.emoji||''}</span><span class="rank-uses">🛠${r.toolUses}${r.tool2Uses?`+${r.tool2Uses}`:''}</span><span class="rank-del" onclick="deleteRanking(${rankings.indexOf(r)})" title="删除">✕</span></div>`;
+      return `<div class="rank-item${isCurrent ? ' current' : ''}"><span class="rank-num ${cls}">${i+1}</span><span class="rank-name">${r.name}${isCurrent ? '<span class="rank-current-tag">你的成绩</span>' : ''}</span><span class="rank-score">${r.totalScore}</span><span class="rank-tier">${TIERS[r.highestTier]?.emoji||''}</span><span class="rank-uses">🛠${r.toolUses}${r.tool2Uses?`+${r.tool2Uses}`:''}</span>${devMode ? '<span class="rank-del" onclick="deleteRanking(' + rankings.indexOf(r) + ')" title="删除">✕</span>' : ''}</div>`;
     }).join('');
   } else {
     sub.textContent = '达最高官时分数从低到高（工具惩罚：工具1/3加30000，工具2加10000）';
@@ -1164,7 +1164,7 @@ function renderRanking(tab) {
     list.innerHTML = sorted.map((r, i) => {
       const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
       const isCurrent = highlightRankId >= 0 && rankings.indexOf(r) === highlightRankId;
-      return `<div class="rank-item${isCurrent ? ' current' : ''}"><span class="rank-num ${cls}">${i+1}</span><span class="rank-name">${r.name}${isCurrent ? '<span class="rank-current-tag">你的成绩</span>' : ''}</span><span class="rank-score">${r.fastestScore}</span><span class="rank-tier">${TIERS[r.highestTier]?.emoji||''}${TIERS[r.highestTier]?.name||''}</span><span class="rank-uses">🛠${r.toolUses}${r.tool2Uses?`+${r.tool2Uses}`:''}</span><span class="rank-del" onclick="deleteRanking(${rankings.indexOf(r)})" title="删除">✕</span></div>`;
+      return `<div class="rank-item${isCurrent ? ' current' : ''}"><span class="rank-num ${cls}">${i+1}</span><span class="rank-name">${r.name}${isCurrent ? '<span class="rank-current-tag">你的成绩</span>' : ''}</span><span class="rank-score">${r.fastestScore}</span><span class="rank-tier">${TIERS[r.highestTier]?.emoji||''}${TIERS[r.highestTier]?.name||''}</span><span class="rank-uses">🛠${r.toolUses}${r.tool2Uses?`+${r.tool2Uses}`:''}</span>${devMode ? '<span class="rank-del" onclick="deleteRanking(' + rankings.indexOf(r) + ')" title="删除">✕</span>' : ''}</div>`;
     }).join('');
   }
   document.querySelectorAll('.rank-tab').forEach(t => t.classList.toggle('active', t.dataset.rank === tab));
