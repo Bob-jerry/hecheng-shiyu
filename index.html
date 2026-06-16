@@ -1534,6 +1534,7 @@ function toggleDevModeBtn() {
 }
 
 function deleteRanking(idx) {
+  if (!devMode) return;
   if (idx < 0 || idx >= rankings.length) return;
   if (!confirm('确定删除该排名记录？')) return;
   rankings.splice(idx, 1);
