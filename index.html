@@ -1017,6 +1017,12 @@ function goBackToGame() {
   onModalClose();
   gameOver = false;
   canDrop = true;
+  currentDrop = null;
+  lastDropTime = Date.now();
+  const maxTier = Math.min(4 + Math.floor(score / 200), 8);
+  nextTier = Math.floor(Math.random() * maxTier);
+  if (nextTier >= TIERS.length) nextTier = TIERS.length - 4;
+  updateUI();
 }
 
 function submitAndRestart() {
@@ -1066,6 +1072,8 @@ function submitAndShowRanking() {
   });
   try { localStorage.setItem('govRankings', JSON.stringify(rankings)); } catch(e) {}
   highlightRankId = rankings.length - 1;
+  // Hide game over overlay so ranking is clearly visible
+  document.getElementById('gameOverOverlay').classList.remove('show');
   showRanking('total');
 }
 
@@ -1408,11 +1416,13 @@ document.querySelectorAll('.rank-tab').forEach(tab => {
 document.getElementById('rankClose').addEventListener('click', () => {
   document.getElementById('rankModal').classList.remove('show');
   onModalClose();
+  if (gameOver) document.getElementById('gameOverOverlay').classList.add('show');
 });
 document.getElementById('rankModal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('rankModal')) {
     document.getElementById('rankModal').classList.remove('show');
     onModalClose();
+    if (gameOver) document.getElementById('gameOverOverlay').classList.add('show');
   }
 });
 
