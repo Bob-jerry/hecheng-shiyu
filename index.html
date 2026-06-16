@@ -24,7 +24,7 @@ canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(139,0,0,.5)}
 .left-btn.muted{color:#666;border-color:rgba(255,255,255,.1)}
 .left-btn.gold{background:rgba(255,215,0,.2);border-color:#ffd700;color:#ffd700;animation:settlePulse 1.5s ease-in-out infinite}
 @keyframes settlePulse{0%,100%{box-shadow:0 0 4px rgba(255,215,0,.3)}50%{box-shadow:0 0 14px rgba(255,215,0,.6)}}
-.settle-btn{display:none}
+.settle-btn{display:none;position:absolute;top:10px;right:6px;width:44px;height:44px;border-radius:6px;background:rgba(255,215,0,.15);border:2px solid #ffd700;color:#ffd700;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;align-items:center;justify-content:center;animation:settlePulse 1.5s ease-in-out infinite;z-index:60}
 .settle-btn.show{display:flex}
 .score-box span{font-size:13px;font-weight:700;color:#ffd700}
 
@@ -135,7 +135,7 @@ canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(139,0,0,.5)}
 .congrats-sub{color:#ffaaaa;font-size:13px;text-align:center}
 .congrats-score{color:#fff;font-size:14px;margin-top:4px}
 .congrats-score span{color:#ffd700;font-weight:700;font-size:18px}
-.congrats-btns{display:flex;flex-direction:column;gap:8px;margin-top:8px;width:100%}
+.congrats-name-area{margin:2px 0;width:100%;display:flex;justify-content:center}.congrats-rank-display{color:#ffd700;font-size:16px;font-weight:700;text-align:center;padding:8px 12px;background:rgba(255,215,0,.1);border-radius:8px;width:100%;margin:4px 0}.game-over-rank{color:#ffd700;font-size:14px;font-weight:700;text-align:center;margin-bottom:6px}.congrats-btns{display:flex;flex-direction:column;gap:8px;margin-top:8px;width:100%}
 .congrats-btn{border:none;border-radius:20px;padding:10px 24px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .15s;font-family:inherit;width:100%}
 .congrats-btn:hover{transform:scale(1.05)}
 .congrats-btn-rank{background:linear-gradient(135deg,#ffd700,#ff8c00);color:#5a0000}
@@ -170,10 +170,10 @@ canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(139,0,0,.5)}
     <div class="left-btns">
       <div class="score-box">🎯<br><span id="scoreDisplay">0</span></div>
       <button class="left-btn" onclick="showRanking()" title="排行榜">🏆</button>
-	      <button class="left-btn settle-btn" id="settleBtn" onclick="settleGame()" title="结算">💰</button>
       <button class="left-btn" onclick="if(confirm('确定重新开始？当前进度将丢失'))restartGame()" title="重新开始">🔄</button>
       <button class="left-btn" id="settingsBtn" onclick="openSettings()" title="设置">⚙️</button>
     </div>
+    <button class="settle-btn" id="settleBtn" onclick="settleGame()" title="结算">结算</button>
     <div class="tool-status" id="toolStatus"></div>
     <div class="level-info" id="levelInfo">点击/触摸位置投放</div>
     <div class="game-over" id="gameOverOverlay">
@@ -181,6 +181,7 @@ canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(139,0,0,.5)}
       <div class="final-score" id="finalScore">0</div>
       <p>最终官场积分</p>
       <div class="merged-count" id="mergedCount"></div>
+      <div class="game-over-rank" id="gameOverRank" style="display:none"></div>
       <input class="name-input" id="nameInput" placeholder="输入你的大名" maxlength="8">
       <div class="btn-group">
         <button class="btn-restart" onclick="submitAndShowRanking()">📝 提交排名</button>
@@ -197,8 +198,12 @@ canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(139,0,0,.5)}
       <div class="congrats-title">恭喜成功合成<br>国务院总理！</div>
       <div class="congrats-sub">你已登顶公务员仕途之巅！</div>
       <div class="congrats-score">当前积分：<span id="congratsScore">0</span></div>
+      <div class="congrats-name-area">
+        <input class="name-input" id="congratsNameInput" placeholder="输入你的大名" maxlength="8" value="匿名">
+      </div>
+      <div class="congrats-rank-display" id="congratsRankDisplay" style="display:none"></div>
       <div class="congrats-btns">
-        <button class="congrats-btn congrats-btn-rank" onclick="showRankingAfterCongrats()">🏆 查看排名</button>
+        <button class="congrats-btn congrats-btn-rank" id="congratsSubmitBtn" onclick="submitCongratsRank()">📝 提交排名</button>
         <button class="congrats-btn congrats-btn-continue" onclick="closeCongrats()">继续游戏</button>
       </div>
     </div>
@@ -344,6 +349,7 @@ let highestTierEver = -1;
 let scoreAtHighestTier = 0;
 let rankings = [];
 let highlightRankId = -1;
+let sessionRankIdx = -1;
 
 // Modal state
 let modalOpenCount = 0;
@@ -420,7 +426,9 @@ function initGame() {
   flyTexts = [];
   chainMergeCount = 0;
   highlightRankId = -1;
+  sessionRankIdx = -1;
   document.getElementById('toolStatus').style.display = 'none';
+  document.getElementById('settleBtn').classList.add('show');
   mergeEventsBound = false;
   modalOpenCount = 0;
   document.getElementById('modalBackdrop').classList.remove('show');
@@ -927,6 +935,11 @@ function showCongrats() {
   document.getElementById('congratsModal').classList.add('show');
   onModalOpen();
   document.getElementById('settleBtn').classList.add('show');
+  // Reset congrats UI
+  document.getElementById('congratsSubmitBtn').style.display = 'block';
+  document.getElementById('congratsNameInput').disabled = false;
+  document.getElementById('congratsNameInput').value = playerName || '匿名';
+  document.getElementById('congratsRankDisplay').style.display = 'none';
 }
 
 function closeCongrats() {
@@ -935,8 +948,39 @@ function closeCongrats() {
   onModalClose();
 }
 
+function submitCongratsRank() {
+  const name = document.getElementById('congratsNameInput').value.trim() || '匿名';
+  playerName = name;
+  const entry = {
+    name,
+    totalScore: score,
+    fastestScore: (scoreAtHighestTier > 0 ? scoreAtHighestTier : score) + 60000 * toolUses + 10000 * tool2Uses,
+    highestTier: highestTierEver,
+    toolUses,
+    tool2Uses,
+    date: new Date().toLocaleDateString()
+  };
+  if (sessionRankIdx >= 0 && sessionRankIdx < rankings.length) {
+    rankings[sessionRankIdx] = entry;
+    highlightRankId = sessionRankIdx;
+  } else {
+    rankings.push(entry);
+    highlightRankId = rankings.length - 1;
+    sessionRankIdx = highlightRankId;
+  }
+  try { localStorage.setItem('govRankings', JSON.stringify(rankings)); } catch(e) {}
+  // Calculate rank position
+  const sorted = [...rankings].sort((a, b) => b.totalScore - a.totalScore);
+  const rankPos = sorted.findIndex(r => rankings.indexOf(r) === highlightRankId) + 1;
+  document.getElementById('congratsSubmitBtn').style.display = 'none';
+  document.getElementById('congratsNameInput').disabled = true;
+  const rankDisplay = document.getElementById('congratsRankDisplay');
+  rankDisplay.style.display = 'block';
+  rankDisplay.textContent = '🏅 你的排名：第 ' + rankPos + ' 名（共 ' + rankings.length + ' 人）';
+}
+
 function showRankingAfterCongrats() {
-  // Save current score to rankings temporarily (only once per session) and highlight it
+  // Save current score to rankings (only once per session via congrats) and highlight it
   if (highlightRankId < 0) {
     const name = playerName || '匿名';
     const fastestScore = (scoreAtHighestTier > 0 ? scoreAtHighestTier : score) + 60000 * toolUses + 10000 * tool2Uses;
@@ -950,6 +994,7 @@ function showRankingAfterCongrats() {
       date: new Date().toLocaleDateString()
     });
     highlightRankId = rankings.length - 1;
+    if (sessionRankIdx < 0) sessionRankIdx = highlightRankId;
   }
   showRanking('total');
 }
@@ -997,6 +1042,13 @@ function setGameOver() {
   const maxTier = balls.reduce((max, b) => b.tier > max ? b.tier : max, -1);
   document.getElementById('mergedCount').textContent = `最高官职：${maxTier >= 0 ? TIERS[maxTier].emoji + ' ' + TIERS[maxTier].name : '无'}`;
   document.getElementById('nameInput').value = playerName;
+  // Calculate rank in total score ranking
+  const rankEl = document.getElementById('gameOverRank');
+  const allScores = rankings.map(r => r.totalScore).concat(score);
+  allScores.sort((a, b) => b - a);
+  const rankPos = allScores.indexOf(score) + 1;
+  rankEl.textContent = '运营总分：' + score + ' · 当前排名：#' + rankPos;
+  rankEl.style.display = 'block';
   setTimeout(() => {
     document.getElementById('gameOverOverlay').classList.add('show');
     onModalOpen();
@@ -1019,6 +1071,7 @@ function goBackToGame() {
   canDrop = true;
   currentDrop = null;
   lastDropTime = Date.now();
+  document.getElementById('settleBtn').classList.add('show');
   const maxTier = Math.min(4 + Math.floor(score / 200), 8);
   nextTier = Math.floor(Math.random() * maxTier);
   if (nextTier >= TIERS.length) nextTier = TIERS.length - 4;
@@ -1059,19 +1112,24 @@ function submitAndShowRanking() {
   }
   const name = document.getElementById('nameInput').value.trim() || '匿名';
   playerName = name;
-  const fastestScore = (scoreAtHighestTier > 0 ? scoreAtHighestTier : score) + 60000 * toolUses + 10000 * tool2Uses;
-  const maxTier = balls.reduce((max, b) => b.tier > max ? b.tier : max, -1);
-  rankings.push({
+  const entry = {
     name,
     totalScore: score,
-    fastestScore,
-    highestTier: Math.max(highestTierEver, maxTier),
+    fastestScore: (scoreAtHighestTier > 0 ? scoreAtHighestTier : score) + 60000 * toolUses + 10000 * tool2Uses,
+    highestTier: Math.max(highestTierEver, balls.reduce((max, b) => b.tier > max ? b.tier : max, -1)),
     toolUses,
     tool2Uses,
     date: new Date().toLocaleDateString()
-  });
+  };
+  if (sessionRankIdx >= 0 && sessionRankIdx < rankings.length) {
+    rankings[sessionRankIdx] = entry;
+    highlightRankId = sessionRankIdx;
+  } else {
+    rankings.push(entry);
+    highlightRankId = rankings.length - 1;
+    sessionRankIdx = highlightRankId;
+  }
   try { localStorage.setItem('govRankings', JSON.stringify(rankings)); } catch(e) {}
-  highlightRankId = rankings.length - 1;
   // Hide game over overlay so ranking is clearly visible
   document.getElementById('gameOverOverlay').classList.remove('show');
   showRanking('total');
