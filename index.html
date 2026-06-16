@@ -183,11 +183,9 @@ canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(139,0,0,.5)}
       <div class="merged-count" id="mergedCount"></div>
       <input class="name-input" id="nameInput" placeholder="输入你的大名" maxlength="8">
       <div class="btn-group">
-        <button class="btn-restart" onclick="submitAndShowRanking()">📝 提交并查看排名</button>
-        <button class="btn-restart" onclick="restartWithoutSubmit()" style="background:linear-gradient(135deg,#666,#333);font-size:13px">🔄 直接重来</button>
-      </div>
-      <div style="margin-top:6px">
-        <button class="btn-rank" onclick="showRanking()">🏆 查看排行榜</button>
+        <button class="btn-restart" onclick="submitAndShowRanking()">📝 提交排名</button>
+        <button class="btn-restart" onclick="goBackToGame()" style="background:linear-gradient(135deg,#666,#333);font-size:13px">🏠 返回主界面</button>
+	        <button class="btn-restart" onclick="restartWithoutSubmit()" style="background:linear-gradient(135deg,#666,#333);font-size:13px">🔄 重新开始</button>
       </div>
     </div>
   </div>
@@ -618,7 +616,7 @@ function bindMergeEvents() {
       createMergeEffect(midX, midY, TIERS[newTier].color);
       createScorePopup(midX, midY, points);
       triggerShake(3 + newTier * 0.5);
-      flashAlpha = 0.2 + newTier * 0.03;
+      if (newTier >= TIERS.length - 2) flashAlpha = 0.3;
       playMergeSound(newTier);
       chainMergeCount++;
       if (chainMergeCount >= 5 && flyTexts.length === 0) {
@@ -1014,6 +1012,13 @@ function settleGame() {
   setGameOver();
 }
 
+function goBackToGame() {
+  document.getElementById('gameOverOverlay').classList.remove('show');
+  onModalClose();
+  gameOver = false;
+  canDrop = true;
+}
+
 function submitAndRestart() {
   if (devMode) {
     restartGame();
@@ -1158,13 +1163,13 @@ function drawBall(body, tierIndex) {
   if (!tier) return;
   const { x, y } = body.position;
   const radius = body.circleRadius || tier.radius;
-  if (tierIndex >= 7) { ctx.beginPath(); ctx.arc(x, y, radius + 6, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,215,0,0.15)'; ctx.fill(); }
+  if (tierIndex >= TIERS.length - 2) { ctx.beginPath(); ctx.arc(x, y, radius + 6, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,215,0,0.15)'; ctx.fill(); }
   ctx.beginPath(); ctx.arc(x + 2, y + 2, radius, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fill();
   const grad = ctx.createRadialGradient(x - radius*0.2, y - radius*0.2, radius*0.1, x, y, radius);
   grad.addColorStop(0, lightenColor(tier.color, 25)); grad.addColorStop(0.6, tier.color); grad.addColorStop(1, darkenColor(tier.color, 12));
   ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
   ctx.beginPath(); ctx.arc(x - radius*0.2, y - radius*0.2, radius*0.25, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fill();
-  ctx.lineWidth = tierIndex >= 7 ? 2.5 : 1.5; ctx.strokeStyle = tierIndex >= 7 ? '#ffd700' : 'rgba(255,255,255,.2)'; ctx.stroke();
+  ctx.lineWidth = tierIndex >= TIERS.length - 2 ? 2.5 : 1.5; ctx.strokeStyle = tierIndex >= TIERS.length - 2 ? '#ffd700' : 'rgba(255,255,255,.2)'; ctx.stroke();
   ctx.font = `${Math.max(12, radius * 0.7)}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(tier.emoji, x, y - radius * 0.12);
   const fontSize = Math.max(10, Math.min(14, radius * 0.4));
   ctx.font = `bold ${fontSize}px "Microsoft YaHei","PingFang SC",sans-serif`;
