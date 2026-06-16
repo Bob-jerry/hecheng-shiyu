@@ -268,6 +268,10 @@ canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(139,0,0,.5)}
         </div>
         <div class="settings-pwd-error" id="devPasswordError">密码错误！</div>
       </div>
+      <div class="settings-item" style="margin-top:6px;border-top:1px solid rgba(255,215,0,.15);padding-top:8px">
+        <span style="color:#ff6b6b;font-size:12px">🗑️ 删除所有排名数据</span>
+        <button class="settings-toggle" onclick="clearRankings()" style="color:#ff6b6b;border-color:#ff6b6b;font-size:11px">删除</button>
+      </div>
     </div>
   </div>
 </div>
@@ -949,6 +953,7 @@ function closeCongrats() {
 }
 
 function submitCongratsRank() {
+  if (devMode) return;
   const name = document.getElementById('congratsNameInput').value.trim() || '匿名';
   playerName = name;
   const entry = {
@@ -981,7 +986,7 @@ function submitCongratsRank() {
 
 function showRankingAfterCongrats() {
   // Save current score to rankings (only once per session via congrats) and highlight it
-  if (highlightRankId < 0) {
+  if (highlightRankId < 0 && !devMode) {
     const name = playerName || '匿名';
     const fastestScore = (scoreAtHighestTier > 0 ? scoreAtHighestTier : score) + 60000 * toolUses + 10000 * tool2Uses;
     rankings.push({
@@ -1528,6 +1533,17 @@ function toggleDevModeBtn() {
     document.getElementById('devPasswordArea').style.display = 'flex';
     document.getElementById('devPasswordInput').focus();
   }
+}
+
+function clearRankings() {
+  if (!confirm('确定删除所有排名数据？此操作不可恢复！')) return;
+  rankings = [];
+  sessionRankIdx = -1;
+  highlightRankId = -1;
+  try { localStorage.removeItem('govRankings'); } catch(e) {}
+  showToolStatus('🗑️ 所有排名数据已删除', 2000);
+  // Close ranking modal if open
+  document.getElementById('rankModal').classList.remove('show');
 }
 
 function submitDevPassword() {
